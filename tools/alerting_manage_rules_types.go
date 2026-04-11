@@ -444,8 +444,13 @@ type ManageRulesReadParams struct {
 func (p ManageRulesReadParams) validate() error {
 	switch p.Operation {
 	case "list":
-		_, err := buildGetRulesOpts(p.listFilterParams, p.FolderUID, p.RuleGroup)
-		return err
+		if _, err := buildGetRulesOpts(p.listFilterParams, p.FolderUID, p.RuleGroup); err != nil {
+			return err
+		}
+		if _, err := p.parseLabelSelectors(); err != nil {
+			return err
+		}
+		return nil
 	case "get":
 		if p.RuleUID == "" {
 			return fmt.Errorf("rule_uid is required for 'get' operation")
@@ -494,8 +499,13 @@ type ManageRulesReadWriteParams struct {
 func (p ManageRulesReadWriteParams) validate() error {
 	switch p.Operation {
 	case "list":
-		_, err := buildGetRulesOpts(p.listFilterParams, p.FolderUID, p.RuleGroup)
-		return err
+		if _, err := buildGetRulesOpts(p.listFilterParams, p.FolderUID, p.RuleGroup); err != nil {
+			return err
+		}
+		if _, err := p.parseLabelSelectors(); err != nil {
+			return err
+		}
+		return nil
 	case "get":
 		if p.RuleUID == "" {
 			return fmt.Errorf("rule_uid is required for 'get' operation")

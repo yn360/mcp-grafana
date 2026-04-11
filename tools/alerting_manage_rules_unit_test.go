@@ -519,6 +519,11 @@ func TestManageRules_ListRules(t *testing.T) {
 			wantErr: "invalid matcher",
 		},
 		{
+			name:    "invalid label selector",
+			params:  ManageRulesReadParams{listFilterParams: listFilterParams{LabelSelectors: []string{`{severity>>invalid}`}}, Operation: "list"},
+			wantErr: "invalid label selector",
+		},
+		{
 			name:    "get without rule_uid",
 			params:  ManageRulesReadParams{Operation: "get"},
 			wantErr: "rule_uid is required",
@@ -636,6 +641,13 @@ func TestManageRulesReadWrite_ValidationErrors(t *testing.T) {
 				return manageRulesReadWrite(ctx, ManageRulesReadWriteParams{listFilterParams: listFilterParams{SearchFolder: "Production"}, Operation: "list", FolderUID: "folder-1"})
 			},
 			wantErr: "mutually exclusive",
+		},
+		{
+			name: "invalid label selector",
+			call: func() (any, error) {
+				return manageRulesReadWrite(ctx, ManageRulesReadWriteParams{listFilterParams: listFilterParams{LabelSelectors: []string{`{severity>>invalid}`}}, Operation: "list"})
+			},
+			wantErr: "invalid label selector",
 		},
 		{
 			name: "create missing title",
