@@ -43,7 +43,8 @@ func manageRulesRead(ctx context.Context, args ManageRulesReadParams) (any, erro
 }
 
 func manageRulesReadWrite(ctx context.Context, args ManageRulesReadWriteParams) (any, error) {
-	if err := args.validate(); err != nil {
+	validated, err := args.validate()
+	if err != nil {
 		return nil, fmt.Errorf("alerting_manage_rules: %w", err)
 	}
 
@@ -66,17 +67,9 @@ func manageRulesReadWrite(ctx context.Context, args ManageRulesReadWriteParams) 
 	case "versions":
 		return getAlertRuleVersions(ctx, args.RuleUID)
 	case "create":
-		cp, err := args.toCreateParams()
-		if err != nil {
-			return nil, fmt.Errorf("alerting_manage_rules: %w", err)
-		}
-		return createAlertRule(ctx, cp)
+		return createAlertRule(ctx, *validated.createParams)
 	case "update":
-		up, err := args.toUpdateParams()
-		if err != nil {
-			return nil, fmt.Errorf("alerting_manage_rules: %w", err)
-		}
-		return updateAlertRule(ctx, up)
+		return updateAlertRule(ctx, *validated.updateParams)
 	case "delete":
 		return deleteAlertRule(ctx, DeleteAlertRuleParams{
 			UID: args.RuleUID,

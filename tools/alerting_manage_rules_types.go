@@ -3,6 +3,7 @@ package tools
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/prometheus/prometheus/model/labels"
@@ -348,7 +349,14 @@ func parseMatcherStrings(strs []string) ([]*labels.Matcher, error) {
 	}
 	var result []*labels.Matcher
 	for _, s := range strs {
-		parsed, err := parser.ParseMetricSelector("{" + s + "}")
+		// Strip existing braces if present to avoid double-wrapping.
+		// This handles cases where users provide selector-style strings like
+		// "{severity=\"critical\"}" instead of bare matchers like "severity=\"critical\"".
+		trimmed := strings.TrimSpace(s)
+		if strings.HasPrefix(trimmed, "{") && strings.HasSuffix(trimmed, "}") {
+			trimmed = trimmed[1 : len(trimmed)-1]
+		}
+		parsed, err := parser.ParseMetricSelector("{" + trimmed + "}")
 		if err != nil {
 			return nil, fmt.Errorf("invalid matcher %q: %w", s, err)
 		}
@@ -485,40 +493,52 @@ type ManageRulesReadWriteParams struct {
 	DisableProvenance           *bool             `json:"disable_provenance,omitempty" jsonschema:"description=If true\\, the alert remains editable in the Grafana UI (sets X-Disable-Provenance header). Defaults to true."`
 }
 
-func (p ManageRulesReadWriteParams) validate() error {
+// validateResult holds pre-converted params from validation to avoid duplicate JSON round-trips.
+type validateResult struct {
+	createParams *CreateAlertRuleParams
+	updateParams *UpdateAlertRuleParams
+}
+
+func (p ManageRulesReadWriteParams) validate() (*validateResult, error) {
 	switch p.Operation {
 	case "list":
 		_, err := buildGetRulesOpts(p.listFilterParams, p.FolderUID, p.RuleGroup)
-		return err
+		return nil, err
 	case "get":
 		if p.RuleUID == "" {
-			return fmt.Errorf("rule_uid is required for 'get' operation")
+			return nil, fmt.Errorf("rule_uid is required for 'get' operation")
 		}
-		return nil
+		return nil, nil
 	case "versions":
 		if p.RuleUID == "" {
-			return fmt.Errorf("rule_uid is required for 'versions' operation")
+			return nil, fmt.Errorf("rule_uid is required for 'versions' operation")
 		}
-		return nil
+		return nil, nil
 	case "create":
 		cp, err := p.toCreateParams()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return cp.validate()
+		if err := cp.validate(); err != nil {
+			return nil, err
+		}
+		return &validateResult{createParams: &cp}, nil
 	case "update":
 		up, err := p.toUpdateParams()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return up.validate()
+		if err := up.validate(); err != nil {
+			return nil, err
+		}
+		return &validateResult{updateParams: &up}, nil
 	case "delete":
 		if p.RuleUID == "" {
-			return fmt.Errorf("rule_uid is required for 'delete' operation")
+			return nil, fmt.Errorf("rule_uid is required for 'delete' operation")
 		}
-		return nil
+		return nil, nil
 	default:
-		return fmt.Errorf("unknown operation %q, must be one of: list, get, versions, create, update, delete", p.Operation)
+		return nil, fmt.Errorf("unknown operation %q, must be one of: list, get, versions, create, update, delete", p.Operation)
 	}
 }
 

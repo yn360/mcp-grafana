@@ -1416,3 +1416,53 @@ func TestExtractQuerySummaries(t *testing.T) {
 		require.Equal(t, "B", summaries[2].Expression)
 	})
 }
+
+func TestParseMatcherStrings(t *testing.T) {
+	t.Run("parses bare matchers", func(t *testing.T) {
+		matchers, err := parseMatcherStrings([]string{`severity="critical"`})
+		require.NoError(t, err)
+		require.Len(t, matchers, 1)
+		require.Equal(t, "severity", matchers[0].Name)
+		require.Equal(t, "critical", matchers[0].Value)
+	})
+
+	t.Run("strips existing braces to avoid double-wrapping", func(t *testing.T) {
+		matchers, err := parseMatcherStrings([]string{`{severity="critical"}`})
+		require.NoError(t, err)
+		require.Len(t, matchers, 1)
+		require.Equal(t, "severity", matchers[0].Name)
+		require.Equal(t, "critical", matchers[0].Value)
+	})
+
+	t.Run("handles whitespace with braces", func(t *testing.T) {
+		matchers, err := parseMatcherStrings([]string{`  {severity="critical"}  `})
+		require.NoError(t, err)
+		require.Len(t, matchers, 1)
+		require.Equal(t, "severity", matchers[0].Name)
+		require.Equal(t, "critical", matchers[0].Value)
+	})
+
+	t.Run("handles multiple matchers in single selector", func(t *testing.T) {
+		matchers, err := parseMatcherStrings([]string{`{severity="critical", env!="dev"}`})
+		require.NoError(t, err)
+		require.Len(t, matchers, 2)
+	})
+
+	t.Run("handles regex matchers", func(t *testing.T) {
+		matchers, err := parseMatcherStrings([]string{`team=~"backend.*"`})
+		require.NoError(t, err)
+		require.Len(t, matchers, 1)
+		require.Equal(t, "team", matchers[0].Name)
+		require.Equal(t, "backend.*", matchers[0].Value)
+	})
+
+	t.Run("empty input returns nil", func(t *testing.T) {
+		matchers, err := parseMatcherStrings(nil)
+		require.NoError(t, err)
+		require.Nil(t, matchers)
+
+		matchers, err = parseMatcherStrings([]string{})
+		require.NoError(t, err)
+		require.Nil(t, matchers)
+	})
+}
