@@ -40,8 +40,8 @@ func newAssertsClient(ctx context.Context) (*Client, error) {
 }
 
 type GetAssertionsParams struct {
-	StartTime  time.Time `json:"startTime" jsonschema:"required,description=The start time in RFC3339 format"`
-	EndTime    time.Time `json:"endTime" jsonschema:"required,description=The end time in RFC3339 format"`
+	StartTime  time.Time `json:"startTime" jsonschema:"required,description=The start time in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
+	EndTime    time.Time `json:"endTime" jsonschema:"required,description=The end time in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
 	EntityType string    `json:"entityType" jsonschema:"description=The type of the entity to list (e.g. Service\\, Node\\, Pod\\, etc.)"`
 	EntityName string    `json:"entityName" jsonschema:"description=The name of the entity to list"`
 	Env        string    `json:"env,omitempty" jsonschema:"description=The env of the entity to list"`

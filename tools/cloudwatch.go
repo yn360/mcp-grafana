@@ -33,8 +33,8 @@ type CloudWatchQueryParams struct {
 	Dimensions    map[string]string `json:"dimensions,omitempty" jsonschema:"description=Dimensions as key-value pairs (e.g. {\"ClusterName\": \"my-cluster\"})"`
 	Statistic     string            `json:"statistic,omitempty" jsonschema:"enum=Average,enum=Sum,enum=Maximum,enum=Minimum,enum=SampleCount,description=Statistic type: Average\\, Sum\\, Maximum\\, Minimum\\, SampleCount. Default: Average"`
 	Period        int               `json:"period,omitempty" jsonschema:"description=Period in seconds (default: 300)"`
-	Start         string            `json:"start,omitempty" jsonschema:"description=Start time. Formats: 'now-1h'\\, '2026-02-02T19:00:00Z'\\, '1738519200000' (Unix ms). Default: now-1h"`
-	End           string            `json:"end,omitempty" jsonschema:"description=End time. Formats: 'now'\\, '2026-02-02T20:00:00Z'\\, '1738522800000' (Unix ms). Default: now"`
+	Start         string            `json:"start,omitempty" jsonschema:"description=Start time. Formats: 'now-1h'\\, '2026-02-02T19:00:00Z'\\, '1738519200000' (Unix ms). Default: now-1h. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	End           string            `json:"end,omitempty" jsonschema:"description=End time. Formats: 'now'\\, '2026-02-02T20:00:00Z'\\, '1738522800000' (Unix ms). Default: now. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Region        string            `json:"region" jsonschema:"required,description=AWS region (e.g. us-east-1)"`
 	AccountId     string            `json:"accountId,omitempty" jsonschema:"description=AWS account ID for cross-account monitoring. Specify an account ID to query metrics from a specific source account\\, or 'all' to query all accounts the monitoring account is permitted to query. Only relevant when using a CloudWatch monitoring account datasource."`
 }

@@ -28,8 +28,8 @@ type SearchLogsParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of a ClickHouse or Loki datasource"`
 	Pattern       string `json:"pattern" jsonschema:"required,description=Text pattern or regex to search for in log messages"`
 	Table         string `json:"table,omitempty" jsonschema:"description=Table name for ClickHouse queries. DISCOVERY REQUIRED: Run list_clickhouse_tables first to find available tables. Default 'otel_logs' assumes OpenTelemetry log schema and may not exist. Ignored for Loki."`
-	Start         string `json:"start,omitempty" jsonschema:"description=Start time (e.g. 'now-1h'\\, '2026-02-02T19:00:00Z'\\, Unix ms). Defaults to 'now-1h'"`
-	End           string `json:"end,omitempty" jsonschema:"description=End time (e.g. 'now'\\, RFC3339\\, Unix ms). Defaults to 'now'"`
+	Start         string `json:"start,omitempty" jsonschema:"description=Start time (e.g. 'now-1h'\\, '2026-02-02T19:00:00Z'\\, Unix ms). Defaults to 'now-1h'. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	End           string `json:"end,omitempty" jsonschema:"description=End time (e.g. 'now'\\, RFC3339\\, Unix ms). Defaults to 'now'. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Limit         int    `json:"limit,omitempty" jsonschema:"default=100,description=Maximum number of log entries to return (max 1000)"`
 }
 

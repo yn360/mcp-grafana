@@ -24,8 +24,8 @@ type GenerateDeeplinkParams struct {
 }
 
 type TimeRange struct {
-	From string `json:"from" jsonschema:"description=Start time (e.g.\\, 'now-1h')"`
-	To   string `json:"to" jsonschema:"description=End time (e.g.\\, 'now')"`
+	From string `json:"from" jsonschema:"description=Start time (e.g.\\, 'now-1h'). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to produce a link in a different timezone."`
+	To   string `json:"to" jsonschema:"description=End time (e.g.\\, 'now'). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to produce a link in a different timezone."`
 }
 
 func generateDeeplink(ctx context.Context, args GenerateDeeplinkParams) (string, error) {

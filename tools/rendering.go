@@ -77,8 +77,8 @@ type GetPanelImageParams struct {
 }
 
 type RenderTimeRange struct {
-	From string `json:"from" jsonschema:"description=Start time (e.g.\\, 'now-1h'\\, '2024-01-01T00:00:00Z')"`
-	To   string `json:"to" jsonschema:"description=End time (e.g.\\, 'now'\\, '2024-01-01T12:00:00Z')"`
+	From string `json:"from" jsonschema:"description=Start time (e.g.\\, 'now-1h'\\, '2024-01-01T00:00:00Z'). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to render in a different timezone."`
+	To   string `json:"to" jsonschema:"description=End time (e.g.\\, 'now'\\, '2024-01-01T12:00:00Z'). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to render in a different timezone."`
 }
 
 func getPanelImage(ctx context.Context, args GetPanelImageParams) (*mcp.CallToolResult, error) {

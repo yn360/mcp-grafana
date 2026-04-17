@@ -65,8 +65,8 @@ var ListPrometheusMetricMetadata = mcpgrafana.MustTool(
 type QueryPrometheusParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	Expr          string `json:"expr" jsonschema:"required,description=The PromQL expression to query"`
-	StartTime     string `json:"startTime,omitempty" jsonschema:"description=The start time. Required if queryType is 'range'\\, ignored if queryType is 'instant' Supported formats are RFC3339 or relative to now (e.g. 'now'\\, 'now-1.5h'\\, 'now-2h45m'). Valid time units are 'ns'\\, 'us' (or 'µs')\\, 'ms'\\, 's'\\, 'm'\\, 'h'\\, 'd'."`
-	EndTime       string `json:"endTime" jsonschema:"required,description=The end time. Supported formats are RFC3339 or relative to now (e.g. 'now'\\, 'now-1.5h'\\, 'now-2h45m'). Valid time units are 'ns'\\, 'us' (or 'µs')\\, 'ms'\\, 's'\\, 'm'\\, 'h'\\, 'd'."`
+	StartTime     string `json:"startTime,omitempty" jsonschema:"description=The start time. Required if queryType is 'range'\\, ignored if queryType is 'instant' Supported formats are RFC3339 or relative to now (e.g. 'now'\\, 'now-1.5h'\\, 'now-2h45m'). Valid time units are 'ns'\\, 'us' (or 'µs')\\, 'ms'\\, 's'\\, 'm'\\, 'h'\\, 'd'. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndTime       string `json:"endTime" jsonschema:"required,description=The end time. Supported formats are RFC3339 or relative to now (e.g. 'now'\\, 'now-1.5h'\\, 'now-2h45m'). Valid time units are 'ns'\\, 'us' (or 'µs')\\, 'ms'\\, 's'\\, 'm'\\, 'h'\\, 'd'. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	StepSeconds   int    `json:"stepSeconds,omitempty" jsonschema:"description=The time series step size in seconds. Required if queryType is 'range'\\, ignored if queryType is 'instant'"`
 	QueryType     string `json:"queryType,omitempty" jsonschema:"description=The type of query to use. Either 'range' or 'instant'"`
 	ProjectName   string `json:"projectName,omitempty" jsonschema:"description=GCP project name to query (Cloud Monitoring datasources only). Overrides or substitutes the defaultProject configured on the datasource."`
@@ -294,8 +294,8 @@ func (s Selector) Matches(lbls labels.Labels) (bool, error) {
 type ListPrometheusLabelNamesParams struct {
 	DatasourceUID string     `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	Matches       []Selector `json:"matches,omitempty" jsonschema:"description=Optionally\\, a list of label matchers to filter the results by"`
-	StartRFC3339  string     `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the time range to filter the results by"`
-	EndRFC3339    string     `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the time range to filter the results by"`
+	StartRFC3339  string     `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the time range to filter the results by. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string     `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the time range to filter the results by. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Limit         int        `json:"limit,omitempty" jsonschema:"default=100,description=Optionally\\, the maximum number of results to return"`
 	ProjectName   string     `json:"projectName,omitempty" jsonschema:"description=GCP project name to query (Cloud Monitoring datasources only). Overrides or substitutes the defaultProject configured on the datasource."`
 }
@@ -354,8 +354,8 @@ type ListPrometheusLabelValuesParams struct {
 	DatasourceUID string     `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	LabelName     string     `json:"labelName" jsonschema:"required,description=The name of the label to query"`
 	Matches       []Selector `json:"matches,omitempty" jsonschema:"description=Optionally\\, a list of selectors to filter the results by"`
-	StartRFC3339  string     `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query"`
-	EndRFC3339    string     `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query"`
+	StartRFC3339  string     `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string     `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Limit         int        `json:"limit,omitempty" jsonschema:"default=100,description=Optionally\\, the maximum number of results to return"`
 	ProjectName   string     `json:"projectName,omitempty" jsonschema:"description=GCP project name to query (Cloud Monitoring datasources only). Overrides or substitutes the defaultProject configured on the datasource."`
 }
@@ -424,8 +424,8 @@ type QueryPrometheusHistogramParams struct {
 	Percentile    float64 `json:"percentile" jsonschema:"required,description=Percentile to calculate (e.g. 50\\, 90\\, 95\\, 99)"`
 	Labels        string  `json:"labels,omitempty" jsonschema:"description=Label selector (e.g. job=\"api\"\\, service=\"gateway\")"`
 	RateInterval  string  `json:"rateInterval,omitempty" jsonschema:"description=Rate interval for the query (default: 5m)"`
-	StartTime     string  `json:"startTime,omitempty" jsonschema:"description=Start time (default: now-1h). Supports RFC3339\\, relative (now-1h)\\, or Unix ms."`
-	EndTime       string  `json:"endTime,omitempty" jsonschema:"description=End time (default: now). Supports RFC3339\\, relative\\, or Unix ms."`
+	StartTime     string  `json:"startTime,omitempty" jsonschema:"description=Start time (default: now-1h). Supports RFC3339\\, relative (now-1h)\\, or Unix ms. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndTime       string  `json:"endTime,omitempty" jsonschema:"description=End time (default: now). Supports RFC3339\\, relative\\, or Unix ms. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	StepSeconds   int     `json:"stepSeconds,omitempty" jsonschema:"description=Step size in seconds for range query (default: 60)"`
 	ProjectName   string  `json:"projectName,omitempty" jsonschema:"description=GCP project name to query (Cloud Monitoring datasources only). Overrides or substitutes the defaultProject configured on the datasource."`
 }

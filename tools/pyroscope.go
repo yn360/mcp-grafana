@@ -47,8 +47,8 @@ var ListPyroscopeLabelNames = mcpgrafana.MustTool(
 type ListPyroscopeLabelNamesParams struct {
 	DataSourceUID string `json:"data_source_uid" jsonschema:"required,description=The UID of the datasource to query"`
 	Matchers      string `json:"matchers,omitempty" jsonschema:"Prometheus style matchers used t0 filter the result set (defaults to: {})"`
-	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 func listPyroscopeLabelNames(ctx context.Context, args ListPyroscopeLabelNamesParams) ([]string, error) {
@@ -107,8 +107,8 @@ type ListPyroscopeLabelValuesParams struct {
 	DataSourceUID string `json:"data_source_uid" jsonschema:"required,description=The UID of the datasource to query"`
 	Name          string `json:"name" jsonschema:"required,description=A label name"`
 	Matchers      string `json:"matchers,omitempty" jsonschema:"description=Optionally\\, Prometheus style matchers used to filter the result set (defaults to: {})"`
-	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 func listPyroscopeLabelValues(ctx context.Context, args ListPyroscopeLabelValuesParams) ([]string, error) {
@@ -171,8 +171,8 @@ var ListPyroscopeProfileTypes = mcpgrafana.MustTool(
 
 type ListPyroscopeProfileTypesParams struct {
 	DataSourceUID string `json:"data_source_uid" jsonschema:"required,description=The UID of the datasource to query"`
-	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"start_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"end_rfc_3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 func listPyroscopeProfileTypes(ctx context.Context, args ListPyroscopeProfileTypesParams) ([]string, error) {
@@ -465,8 +465,8 @@ type QueryPyroscopeParams struct {
 	GroupBy       []string `json:"group_by,omitempty" jsonschema:"description=Labels to group metrics series by"`
 	Step          float64  `json:"step,omitempty" jsonschema:"description=Seconds between metrics data points (default: auto)"`
 	MaxNodeDepth  int      `json:"max_node_depth,omitempty" jsonschema:"description=Max depth for profile call graph (default: 100)"`
-	StartRFC3339  string   `json:"start_rfc_3339,omitempty" jsonschema:"description=Start time in RFC3339 (defaults to 1 hour ago)"`
-	EndRFC3339    string   `json:"end_rfc_3339,omitempty" jsonschema:"description=End time in RFC3339 (defaults to now)"`
+	StartRFC3339  string   `json:"start_rfc_3339,omitempty" jsonschema:"description=Start time in RFC3339 (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string   `json:"end_rfc_3339,omitempty" jsonschema:"description=End time in RFC3339 (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 func queryPyroscope(ctx context.Context, args QueryPyroscopeParams) (string, error) {

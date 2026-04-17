@@ -3,12 +3,70 @@
 package tools
 
 import (
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// TestTimeParamHint verifies the canonical hint text and confirms that the
+// time-range params we care about keep the hint in their jsonschema
+// descriptions. If either the hint or a tag drifts out of sync this test
+// fails, which is the whole point — the helper documents the expected wording
+// for the tags.
+func TestTimeParamHint(t *testing.T) {
+	hint := timeParamHint()
+	require.NotEmpty(t, hint)
+	assert.Contains(t, hint, "UTC")
+	assert.Contains(t, hint, "-05:00")
+
+	substr := strings.TrimSpace(hint)
+
+	type sample struct {
+		value  interface{}
+		fields []string
+	}
+
+	samples := []sample{
+		{QueryLokiLogsParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{QueryLokiStatsParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{QueryLokiPatternsParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{ListLokiLabelNamesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{ListLokiLabelValuesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{QueryPrometheusParams{}, []string{"StartTime", "EndTime"}},
+		{ListPrometheusLabelNamesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{ListPrometheusLabelValuesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{QueryPrometheusHistogramParams{}, []string{"StartTime", "EndTime"}},
+		{ClickHouseQueryParams{}, []string{"Start", "End"}},
+		{CloudWatchQueryParams{}, []string{"Start", "End"}},
+		{QueryElasticsearchParams{}, []string{"StartTime", "EndTime"}},
+		{SearchLogsParams{}, []string{"Start", "End"}},
+		{FindSlowRequestsParams{}, []string{"Start", "End"}},
+		{FindErrorPatternLogsParams{}, []string{"Start", "End"}},
+		{ListPyroscopeLabelNamesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{ListPyroscopeLabelValuesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{ListPyroscopeProfileTypesParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{QueryPyroscopeParams{}, []string{"StartRFC3339", "EndRFC3339"}},
+		{RunPanelQueryParams{}, []string{"Start", "End"}},
+		{GetAssertionsParams{}, []string{"StartTime", "EndTime"}},
+		{AddActivityToIncidentParams{}, []string{"EventTime"}},
+		{TimeRange{}, []string{"From", "To"}},
+		{RenderTimeRange{}, []string{"From", "To"}},
+	}
+
+	for _, s := range samples {
+		ty := reflect.TypeOf(s.value)
+		for _, name := range s.fields {
+			f, ok := ty.FieldByName(name)
+			require.True(t, ok, "field %s.%s not found", ty.Name(), name)
+			tag := f.Tag.Get("jsonschema")
+			assert.Contains(t, tag, substr, "%s.%s jsonschema tag missing time hint", ty.Name(), name)
+		}
+	}
+}
 
 func TestParseStartTime(t *testing.T) {
 	tests := []struct {

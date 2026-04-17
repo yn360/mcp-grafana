@@ -270,8 +270,8 @@ type QueryElasticsearchParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the Elasticsearch datasource to query"`
 	Index         string `json:"index" jsonschema:"required,description=The index pattern to search (e.g.\\, 'logs-*'\\, 'filebeat-*'\\, or a specific index name)"`
 	Query         string `json:"query" jsonschema:"required,description=The search query. Can be either Lucene query syntax (e.g.\\, 'status:200 AND host:server1') or Elasticsearch Query DSL JSON (for advanced queries with aggregations)"`
-	StartTime     string `json:"startTime,omitempty" jsonschema:"description=Optionally\\, the start time in RFC3339 format (e.g.\\, '2024-01-01T00:00:00Z'). Filters results to documents with @timestamp >= this value"`
-	EndTime       string `json:"endTime,omitempty" jsonschema:"description=Optionally\\, the end time in RFC3339 format (e.g.\\, '2024-01-01T23:59:59Z'). Filters results to documents with @timestamp <= this value"`
+	StartTime     string `json:"startTime,omitempty" jsonschema:"description=Optionally\\, the start time in RFC3339 format (e.g.\\, '2024-01-01T00:00:00Z'). Filters results to documents with @timestamp >= this value. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
+	EndTime       string `json:"endTime,omitempty" jsonschema:"description=Optionally\\, the end time in RFC3339 format (e.g.\\, '2024-01-01T23:59:59Z'). Filters results to documents with @timestamp <= this value. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
 	Limit         int    `json:"limit,omitempty" jsonschema:"default=10,description=Optionally\\, the maximum number of documents to return (max: 100\\, default: 10)"`
 }
 

@@ -95,7 +95,7 @@ var CreateIncident = mcpgrafana.MustTool(
 type AddActivityToIncidentParams struct {
 	IncidentID string `json:"incidentId" jsonschema:"description=The ID of the incident to add the activity to"`
 	Body       string `json:"body" jsonschema:"description=The body of the activity. URLs will be parsed and attached as context"`
-	EventTime  string `json:"eventTime" jsonschema:"description=The time that the activity occurred. If not provided\\, the current time will be used"`
+	EventTime  string `json:"eventTime" jsonschema:"description=The time that the activity occurred (RFC3339). If not provided\\, the current time will be used. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to record a time in a different timezone."`
 }
 
 func addActivityToIncident(ctx context.Context, args AddActivityToIncidentParams) (*incident.ActivityItem, error) {

@@ -265,8 +265,8 @@ var ListSiftInvestigations = mcpgrafana.MustTool(
 type FindErrorPatternLogsParams struct {
 	Name   string            `json:"name" jsonschema:"required,description=The name of the investigation"`
 	Labels map[string]string `json:"labels" jsonschema:"required,description=Labels to scope the analysis"`
-	Start  time.Time         `json:"start,omitempty" jsonschema:"description=Start time for the investigation. Defaults to 30 minutes ago if not specified."`
-	End    time.Time         `json:"end,omitempty" jsonschema:"description=End time for the investigation. Defaults to now if not specified."`
+	Start  time.Time         `json:"start,omitempty" jsonschema:"description=Start time for the investigation in RFC3339 format. Defaults to 30 minutes ago if not specified. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
+	End    time.Time         `json:"end,omitempty" jsonschema:"description=End time for the investigation in RFC3339 format. Defaults to now if not specified. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
 }
 
 // findErrorPatternLogs creates an investigation with ErrorPatternLogs check, waits for it to complete, and returns the analysis
@@ -351,8 +351,8 @@ var FindErrorPatternLogs = mcpgrafana.MustTool(
 type FindSlowRequestsParams struct {
 	Name   string            `json:"name" jsonschema:"required,description=The name of the investigation"`
 	Labels map[string]string `json:"labels" jsonschema:"required,description=Labels to scope the analysis"`
-	Start  time.Time         `json:"start,omitempty" jsonschema:"description=Start time for the investigation. Defaults to 30 minutes ago if not specified."`
-	End    time.Time         `json:"end,omitempty" jsonschema:"description=End time for the investigation. Defaults to now if not specified."`
+	Start  time.Time         `json:"start,omitempty" jsonschema:"description=Start time for the investigation in RFC3339 format. Defaults to 30 minutes ago if not specified. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
+	End    time.Time         `json:"end,omitempty" jsonschema:"description=End time for the investigation in RFC3339 format. Defaults to now if not specified. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' to query in a different timezone."`
 }
 
 // findSlowRequests creates an investigation with SlowRequests check, waits for it to complete, and returns the analysis

@@ -236,8 +236,8 @@ func (rt *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 // ListLokiLabelNamesParams defines the parameters for listing Loki label names
 type ListLokiLabelNamesParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
-	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 // listLokiLabelNames lists all label names in a Loki datasource
@@ -273,8 +273,8 @@ var ListLokiLabelNames = mcpgrafana.MustTool(
 type ListLokiLabelValuesParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	LabelName     string `json:"labelName" jsonschema:"required,description=The name of the label to retrieve values for (e.g. 'app'\\, 'env'\\, 'pod')"`
-	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 // listLokiLabelValues lists all values for a specific label in a Loki datasource
@@ -485,8 +485,8 @@ func (c *Client) fetchQuery(ctx context.Context, p fetchQueryParams) (*lokiQuery
 type QueryLokiLogsParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	LogQL         string `json:"logql" jsonschema:"required,description=The LogQL query to execute against Loki. This can be a simple label matcher or a complex query with filters\\, parsers\\, and expressions. Supports full LogQL syntax including label matchers\\, filter operators\\, pattern expressions\\, and pipeline operations."`
-	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format"`
-	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format"`
+	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Limit         int    `json:"limit,omitempty" jsonschema:"default=10,description=Optionally\\, the maximum number of log lines to return (default max: 100\\, configurable by MCP server)."`
 	Direction     string `json:"direction,omitempty" jsonschema:"description=Optionally\\, the direction of the query: 'forward' (oldest first) or 'backward' (newest first\\, default)"`
 	QueryType     string `json:"queryType,omitempty" jsonschema:"description=Query type: 'range' (default) or 'instant'. Instant queries return a single value at one point in time. Range queries return values over a time window. Use 'instant' for metric queries when you want the current value."`
@@ -869,8 +869,8 @@ func (c *Client) fetchPatterns(ctx context.Context, query, startRFC3339, endRFC3
 type QueryLokiStatsParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	LogQL         string `json:"logql" jsonschema:"required,description=The LogQL matcher expression to execute. This parameter only accepts label matcher expressions and does not support full LogQL queries. Line filters\\, pattern operations\\, and metric aggregations are not supported by the stats API endpoint. Only simple label selectors can be used here."`
-	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format"`
-	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format"`
+	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format. Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 }
 
 // queryLokiStats queries stats from a Loki datasource using LogQL
@@ -905,8 +905,8 @@ var QueryLokiStats = mcpgrafana.MustTool(
 type QueryLokiPatternsParams struct {
 	DatasourceUID string `json:"datasourceUid" jsonschema:"required,description=The UID of the datasource to query"`
 	LogQL         string `json:"logql" jsonschema:"required,description=A LogQL stream selector to identify the logs to analyze for patterns (e.g. {job=\"foo\"\\, namespace=\"bar\"})"`
-	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago)"`
-	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now)"`
+	StartRFC3339  string `json:"startRfc3339,omitempty" jsonschema:"description=Optionally\\, the start time of the query in RFC3339 format (defaults to 1 hour ago). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now-1h' to query in a different timezone."`
+	EndRFC3339    string `json:"endRfc3339,omitempty" jsonschema:"description=Optionally\\, the end time of the query in RFC3339 format (defaults to now). Timestamps without a timezone offset are interpreted as UTC; include an offset like '-05:00' or use relative syntax like 'now' to query in a different timezone."`
 	Step          string `json:"step,omitempty" jsonschema:"description=Optionally\\, the query resolution step (e.g. '5m')"`
 }
 
