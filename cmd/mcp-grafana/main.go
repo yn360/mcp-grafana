@@ -279,7 +279,7 @@ func runMetricsServer(addr string, o *observability.Observability) {
 	}
 }
 
-func run(transport, addr, basePath, endpointPath string, logLevel slog.Level, dt disabledTools, gc mcpgrafana.GrafanaConfig, tls tlsConfig, obs observability.Config, sessionIdleTimeoutMinutes int) error {
+func run(transport, addr, basePath, endpointPath string, logLevel slog.Level, dt disabledTools, gc mcpgrafana.GrafanaConfig, tls tlsConfig, obs observability.Config, oc oauthConfig, sessionIdleTimeoutMinutes int) error {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel})))
 
 	// Set up observability (metrics and tracing)
@@ -387,7 +387,20 @@ func run(transport, addr, basePath, endpointPath string, logLevel slog.Level, dt
 		}
 		srv := server.NewStreamableHTTPServer(s, opts...)
 		mux := http.NewServeMux()
-		mux.Handle(endpointPath, observability.WrapHandler(srv, endpointPath))
+
+		// Register OAuth 2.1 discovery endpoints and get the Bearer token
+		// validation middleware. If OAuth is disabled (no OIDC flags set) the
+		// middleware is nil and the endpoint is served without auth.
+		oauthMiddleware, err := setupOAuthHandlers(ctx, mux, &oc)
+		if err != nil {
+			return fmt.Errorf("setup OAuth handlers: %w", err)
+		}
+
+		mcpHandler := observability.WrapHandler(srv, endpointPath)
+		if oauthMiddleware != nil {
+			mcpHandler = oauthMiddleware(mcpHandler)
+		}
+		mux.Handle(endpointPath, mcpHandler)
 		mux.HandleFunc("/healthz", handleHealthz)
 		if obs.MetricsEnabled {
 			if obs.MetricsAddress == "" {
@@ -429,6 +442,11 @@ func main() {
 	var obs observability.Config
 	flag.BoolVar(&obs.MetricsEnabled, "metrics", false, "Enable Prometheus metrics endpoint")
 	flag.StringVar(&obs.MetricsAddress, "metrics-address", "", "Separate address for metrics server (e.g., :9090). If empty, metrics are served on the main server at /metrics")
+	var oc oauthConfig
+	flag.StringVar(&oc.issuerURL, "oidc-issuer-url", "", "OIDC issuer URL for MCP Bearer token auth (e.g. https://heimdall.example.com/realms/Tech). Enables MCP OAuth 2.1 on streamable-http when set.")
+	flag.StringVar(&oc.clientID, "oidc-client-id", "", "Pre-registered Keycloak client ID returned from the fake DCR endpoint (requires --oidc-issuer-url).")
+	flag.StringVar(&oc.clientSecret, "oidc-client-secret", "", "Keycloak client secret returned from the fake DCR endpoint. Can also be set via OIDC_CLIENT_SECRET env var.")
+	flag.StringVar(&oc.baseURL, "oidc-base-url", "", "Public base URL of this MCP server (e.g. https://grafana-mcp.example.com). Used in OAuth 2.1 metadata responses.")
 	flag.Parse()
 
 	if *showVersion {
@@ -462,7 +480,7 @@ func main() {
 		obs.NetworkTransport = mcpconv.NetworkTransportTCP
 	}
 
-	if err := run(transport, *addr, *basePath, *endpointPath, parseLevel(*logLevel), dt, grafanaConfig, tls, obs, *sessionIdleTimeoutMinutes); err != nil {
+	if err := run(transport, *addr, *basePath, *endpointPath, parseLevel(*logLevel), dt, grafanaConfig, tls, obs, oc, *sessionIdleTimeoutMinutes); err != nil {
 		panic(err)
 	}
 }
