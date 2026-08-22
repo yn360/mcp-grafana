@@ -34,6 +34,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -51,8 +52,8 @@ type oauthConfig struct {
 	// DCR endpoint so MCP clients can authenticate at the token endpoint.
 	// Falls back to OIDC_CLIENT_SECRET env var if empty.
 	clientSecret string
-	// baseURL is the public URL of this MCP server used as the "resource" and
-	// "issuer" in the OAuth metadata responses.
+	// baseURL is the public URL of this MCP server, used as the "resource" and
+	// as the base for the metadata and registration endpoint URLs we advertise.
 	baseURL string
 }
 
@@ -149,9 +150,59 @@ func fetchJWKS(ctx context.Context, jwksURI string) (map[string]*rsa.PublicKey, 
 	return keys, nil
 }
 
+// jwksStore holds JWKS public keys with a mutex for concurrent refresh.
+type jwksStore struct {
+	mu      sync.RWMutex
+	keys    map[string]*rsa.PublicKey
+	jwksURI string
+}
+
+func newJWKSStore(jwksURI string, initial map[string]*rsa.PublicKey) *jwksStore {
+	return &jwksStore{jwksURI: jwksURI, keys: initial}
+}
+
+func (s *jwksStore) get(kid string) (*rsa.PublicKey, bool) {
+	s.mu.RLock()
+	k, ok := s.keys[kid]
+	s.mu.RUnlock()
+	return k, ok
+}
+
+func (s *jwksStore) refresh(ctx context.Context) error {
+	keys, err := fetchJWKS(ctx, s.jwksURI)
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	s.keys = keys
+	s.mu.Unlock()
+	slog.Info("Refreshed JWKS keys", "count", len(keys))
+	return nil
+}
+
+// startJWKSRefresh launches a background goroutine that refreshes the JWKS
+// every interval. Stops when ctx is cancelled.
+func startJWKSRefresh(ctx context.Context, store *jwksStore, interval time.Duration) {
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				if err := store.refresh(ctx); err != nil {
+					slog.Warn("JWKS refresh failed", "error", err)
+				}
+			}
+		}
+	}()
+}
+
 // makeJWTValidator returns a middleware that validates Bearer JWTs offline using
-// Keycloak's public keys from JWKS. It checks signature, issuer, and expiry.
-func makeJWTValidator(jwksKeys map[string]*rsa.PublicKey, issuerURL, resourceMetadataURL string) func(http.Handler) http.Handler {
+// Keycloak's public keys. On unknown kid it attempts one immediate JWKS refresh
+// before failing, handling key rotation without a restart.
+func makeJWTValidator(store *jwksStore, issuerURL, resourceMetadataURL string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -161,18 +212,26 @@ func makeJWTValidator(jwksKeys map[string]*rsa.PublicKey, issuerURL, resourceMet
 			}
 			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-			token, err := jwt.Parse(tokenStr,
-				func(t *jwt.Token) (any, error) {
-					if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-						return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			keyFunc := func(t *jwt.Token) (any, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+				}
+				kid, _ := t.Header["kid"].(string)
+				key, ok := store.get(kid)
+				if !ok {
+					// Key unknown — Keycloak may have rotated. Refresh once and retry.
+					if err := store.refresh(r.Context()); err != nil {
+						slog.Warn("JWKS refresh on unknown kid failed", "kid", kid, "error", err)
 					}
-					kid, _ := t.Header["kid"].(string)
-					key, ok := jwksKeys[kid]
+					key, ok = store.get(kid)
 					if !ok {
 						return nil, fmt.Errorf("unknown key id: %q", kid)
 					}
-					return key, nil
-				},
+				}
+				return key, nil
+			}
+
+			token, err := jwt.Parse(tokenStr, keyFunc,
 				jwt.WithIssuer(issuerURL),
 				jwt.WithExpirationRequired(),
 			)
@@ -208,9 +267,12 @@ type protectedResourceMetadata struct {
 
 // authorizationServerMetadata is the RFC 8414 response served at
 // /.well-known/oauth-authorization-server.
-// We use baseURL as the issuer and include a registration_endpoint pointing to
-// our own /oauth/register so MCP clients (e.g. Claude Code) can proceed with
-// PKCE without requiring actual Dynamic Client Registration in Keycloak.
+// The issuer is Keycloak's realm URL, not baseURL: the authorization endpoint
+// we advertise is Keycloak's, so Keycloak is what stamps the "iss" parameter
+// on the authorization response (RFC 9207) and that is what clients compare
+// against this field. We still include a registration_endpoint pointing to our
+// own /oauth/register so MCP clients (e.g. Claude Code) can proceed with PKCE
+// without requiring actual Dynamic Client Registration in Keycloak.
 type authorizationServerMetadata struct {
 	Issuer                        string   `json:"issuer"`
 	AuthorizationEndpoint         string   `json:"authorization_endpoint"`
@@ -267,6 +329,8 @@ func setupOAuthHandlers(ctx context.Context, mux *http.ServeMux, oc *oauthConfig
 	if err != nil {
 		return nil, fmt.Errorf("fetch JWKS: %w", err)
 	}
+	store := newJWKSStore(doc.JWKSURI, jwksKeys)
+	startJWKSRefresh(ctx, store, 5*time.Minute)
 	slog.Info("Loaded JWKS keys", "count", len(jwksKeys))
 
 	resourceMetadataURL := oc.baseURL + "/.well-known/oauth-protected-resource"
@@ -281,7 +345,7 @@ func setupOAuthHandlers(ctx context.Context, mux *http.ServeMux, oc *oauthConfig
 	}
 
 	asmJSON, err := json.Marshal(authorizationServerMetadata{
-		Issuer:                        oc.baseURL,
+		Issuer:                        oc.issuerURL,
 		AuthorizationEndpoint:         doc.AuthorizationEndpoint,
 		TokenEndpoint:                 doc.TokenEndpoint,
 		JWKSURI:                       doc.JWKSURI,
@@ -335,7 +399,7 @@ func setupOAuthHandlers(ctx context.Context, mux *http.ServeMux, oc *oauthConfig
 		_ = json.NewEncoder(w).Encode(resp)
 	})
 
-	middleware := makeJWTValidator(jwksKeys, oc.issuerURL, resourceMetadataURL)
+	middleware := makeJWTValidator(store, oc.issuerURL, resourceMetadataURL)
 
 	slog.Info("MCP OAuth 2.1 enabled",
 		"issuer", oc.issuerURL,
